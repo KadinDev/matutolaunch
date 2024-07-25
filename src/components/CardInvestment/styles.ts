@@ -21,7 +21,7 @@ export const styles = StyleSheet.create({
         height: RFValue(80),
     },
     details: {
-        marginRight: RFValue(10)
+        marginRight: RFValue(10),
     },
     title: {
         fontSize: RFValue(12),
@@ -39,7 +39,5 @@ export const styles = StyleSheet.create({
         color: COLORS.BLACK,
         fontWeight: 'bold',
         textAlign: 'right',
-        borderBottomWidth: 1,
-        borderColor: COLORS.BLACK,
     }
 })

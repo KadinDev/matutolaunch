@@ -27,6 +27,7 @@ export const styles = StyleSheet.create({
         fontFamily: FONTS.TITLE,
         color: COLORS.BLACK,
         textTransform: 'capitalize',
+        textAlign: 'left'
     },
     logo: {
         width: RFValue(100),

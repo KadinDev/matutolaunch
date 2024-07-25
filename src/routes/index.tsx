@@ -7,33 +7,50 @@ import {SplashScreenAnimation} from '@screens/SplashScreenAnimation';
 
 import {SignIn} from '@screens/signin';
 
-const Stack = createNativeStackNavigator();
+import {useAuth} from '@hooks/auth';
+
+const {Group, Screen, Navigator} = createNativeStackNavigator();
 
 export function Routes(){
+
+    const {user} = useAuth();
+
     return (
-        <Stack.Navigator
+        <Navigator
             initialRouteName={'splash'}
             screenOptions={{ headerShown: false, animation: 'flip' }}
         >
+            { user ? (
+                <Group>
+                    <Screen
+                        name='splash'
+                        component={SplashScreenAnimation}
+                    />
+                    <Screen
+                        name='home'
+                        component={Home}
+                    />
+                    <Screen
+                        name='criptoDetails'
+                        component={CriptoDetails}
+                    />
+                    <Screen
+                        name='register'
+                        component={Register}
+                    />
+                </Group>
 
-            <Stack.Screen
-                name='home'
-                component={Home}
-            />
-            <Stack.Screen
-                name='criptoDetails'
-                component={CriptoDetails}
-            />
-            <Stack.Screen
-                name='register'
-                component={Register}
-            />
+            ) : (
 
-            <Stack.Screen
-                name='splash'
-                component={SplashScreenAnimation}
-            />
+                <Screen
+                    name='login'
+                    component={SignIn}
+                />
+            ) }
+            
 
-        </Stack.Navigator>
+            
+
+        </Navigator>
     )
 }

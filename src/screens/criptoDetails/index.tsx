@@ -1,3 +1,5 @@
+import {useState, useEffect} from 'react';
+
 import {
     View, 
     Text, 
@@ -6,7 +8,8 @@ import {
     TouchableOpacity,
     TextInput,
     Keyboard,
-    TouchableWithoutFeedback
+    TouchableWithoutFeedback,
+    ActivityIndicator
 } from 'react-native';
 
 import {styles} from './styles';
@@ -16,6 +19,17 @@ import { RFValue } from 'react-native-responsive-fontsize';
 import {Icon} from '@components/Icon';
 import { COLORS, FONTS } from '@src/theme';
 import {useNavigation} from '@react-navigation/native';
+
+import {
+    getFirestore,
+    collection,
+    addDoc,
+    doc,
+    updateDoc,
+    getDocs,
+    query,
+    where
+} from 'firebase/firestore';
 
 interface RouteParams {
     cripto: CriptoDTO;
@@ -27,6 +41,120 @@ export function CriptoDetails(){
     const {cripto} = route.params as RouteParams;
     const navigation = useNavigation();
 
+    const [payment, setPayment] = useState('');
+    const [nextPayment, setNextPayment] = useState('');
+    const [loadPayment, setLoadPayment] = useState(false);
+    const [loadNextPayment, setLoadNextPayment] = useState(false);
+
+    useEffect(() => {
+        async function fetchPayments(){
+            const db = getFirestore();
+            const paymentsCollectionRef = collection(db, 'payments');
+            const q = query(paymentsCollectionRef, where('allocationId', '==', cripto.allocationId));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                const paymentDoc = querySnapshot.docs[0];
+                const paymentData = paymentDoc.data();
+                setPayment(paymentData.payment);
+            }
+        };
+        fetchPayments();
+    },[]);
+
+    useEffect(() => {
+        async function fetchNextPayments(){
+            const db = getFirestore();
+            const nextPaymentsCollectionRef = collection(db, 'nextpayments');
+            const q = query(nextPaymentsCollectionRef, where('allocationId', '==', cripto.allocationId));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                const nextPaymentDoc = querySnapshot.docs[0];
+                const nextPaymentData = nextPaymentDoc.data();
+                setNextPayment(nextPaymentData.nextPayment);
+            }
+        };
+        fetchNextPayments();
+    },[]);
+
+    async function handlePaymentAmount(id: string){
+        if(!payment){
+            alert('Insira a quantidade de parcelas.');
+            return;
+        };
+        setLoadPayment(true);
+        const db = getFirestore();
+        
+        const paymentsCollectionRef = collection(db, 'payments');
+        const q = query(paymentsCollectionRef, where('allocationId', '==', id));
+        const querySnapshot = await getDocs(q);
+    
+        if (!querySnapshot.empty) {
+            // Update existing payment document
+            const paymentDoc = querySnapshot.docs[0];
+            const paymentDocRef = doc(db, 'payments', paymentDoc.id);
+            try {
+                await updateDoc(paymentDocRef, { payment });
+            } catch (error) {
+                console.log(error);
+            }
+        } else {
+
+            // Add new payment document
+            const paymentData = {
+                payment,
+                allocationId: id
+            };
+            
+            try {
+                await addDoc(paymentsCollectionRef, paymentData);
+            } catch (error) {
+                console.log(error);
+            }
+        }
+    
+        setLoadPayment(false);
+    };
+    
+    async function handleNextPayment(id: string){
+        if(!nextPayment){
+            alert('Insira o próximo mês.');
+            return;
+        };
+        setLoadNextPayment(true);
+        const db = getFirestore();
+    
+        const nextPaymentsCollectionRef = collection(db, 'nextpayments');
+        const q = query(nextPaymentsCollectionRef, where('allocationId', '==', id));
+        const querySnapshot = await getDocs(q);
+    
+        if (!querySnapshot.empty) {
+            // Update existing next payment document
+            const nextPaymentDoc = querySnapshot.docs[0];
+            const nextPaymentDocRef = doc(db, 'nextpayments', nextPaymentDoc.id);
+            try {
+                await updateDoc(nextPaymentDocRef, { nextPayment });
+            } catch (error) {
+                console.log(error);
+            }
+        } else {
+
+            // Add new next payment document
+            const nextPaymentData  = {
+                nextPayment,
+                allocationId: id
+            };
+            
+            try {
+                await addDoc(nextPaymentsCollectionRef, nextPaymentData);
+            } catch (error) {
+                console.log(error);
+            }
+        };
+        setLoadNextPayment(false);
+    };
+    
     return (
         <View style={styles.container}>
             <TouchableWithoutFeedback
@@ -140,21 +268,27 @@ export function CriptoDetails(){
                             
                             <TextInput 
                                 style={styles.input}
-                                placeholder='7'
+                                placeholder='0'
                                 autoCorrect={false}
                                 placeholderTextColor='#999999'
                                 keyboardType='numeric'
+                                value={payment}
+                                onChangeText={setPayment}
                             />
                             
                             <TouchableOpacity
                                 activeOpacity={0.8}
                                 style={styles.buttonInput}
-                                onPress={() => alert('salvar')}
+                                onPress={() => handlePaymentAmount(cripto.allocationId)}
                             >
-                                <Icon
-                                    icon='save'
-                                    color={COLORS.BLACK}
-                                />
+                                {loadPayment ? (
+                                    <ActivityIndicator size={RFValue(20)} color={COLORS.BLACK} />
+                                ) : (
+                                    <Icon
+                                        icon='save'
+                                        color={COLORS.BLACK}
+                                    />
+                                )}
                             </TouchableOpacity>
 
                         </View>
@@ -169,17 +303,23 @@ export function CriptoDetails(){
                                 placeholder='Maio'
                                 autoCorrect={false}
                                 placeholderTextColor='#999999'
+                                value={nextPayment}
+                                onChangeText={setNextPayment}
                             />
                             
                             <TouchableOpacity
                                 activeOpacity={0.8}
                                 style={styles.buttonInput}
-                                onPress={() => alert('salvar')}
+                                onPress={() => handleNextPayment(cripto.allocationId)}
                             >
-                                <Icon
-                                    icon='save'
-                                    color={COLORS.BLACK}
-                                />
+                                {loadNextPayment ? (
+                                    <ActivityIndicator size={RFValue(20)} color={COLORS.BLACK} />
+                                ) : (
+                                    <Icon
+                                        icon='save'
+                                        color={COLORS.BLACK}
+                                    />
+                                )}
                             </TouchableOpacity>
 
                         </View>

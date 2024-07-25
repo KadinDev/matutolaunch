@@ -8,6 +8,8 @@ import {Inter_400Regular} from '@expo-google-fonts/inter';
 import {NavigationContainer} from '@react-navigation/native';
 import {Routes} from './src/routes';
 
+import {AuthProvider} from '@hooks/auth';
+
 SplashScreen.preventAutoHideAsync();
 
 export default function App() {
@@ -27,7 +29,11 @@ export default function App() {
   return (
     <NavigationContainer>
       <StatusBar style='dark' translucent backgroundColor='transparent' />
-      <Routes/>
+      
+      <AuthProvider>
+        <Routes/>
+      </AuthProvider>
+    
     </NavigationContainer>
   );
 }

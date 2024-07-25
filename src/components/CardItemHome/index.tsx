@@ -1,4 +1,3 @@
-import {useState} from 'react';
 
 import {
     View, 
@@ -16,27 +15,40 @@ import { RFValue } from 'react-native-responsive-fontsize';
 import {useNavigation} from '@react-navigation/native';
 import {Icon} from '@components/Icon';
 import { COLORS, FONTS } from '@src/theme';
+import {MessageDeleteAllocation} from '@utils/MessageToast';
 
 interface Props {
     data: CriptoDTO;
 };
 
+import {
+    doc,
+    getFirestore,
+    deleteDoc
+} from 'firebase/firestore';
+
 export function CardItemHome({data} : Props){
 
     const navigation = useNavigation();
+    const firestore = getFirestore();
 
     function messageDeleteProject(item : CriptoDTO){
+        /* ATENÇÃO: No firebase automaticamente cada ALOCAÇÃO salva recebe um ID.
+        Para a função DELETAR funcionar corretamente você não deve passar um ID na tipagem(CriptoDTO),
+        senão o Firebase vai entender que será o ID automatico que criou e não dará certo.
+        Por isso criei na Tipagem o allocationId. (ACHO QUE O FIREBASE VAI
+        INTERPRETAR COMO O ID GERADO DE FORMA AUTOMATICA)*/
+        // TEMTAR UTIIZANDO OUTRA INFO (Nome, uniqueKeyAllocation)
         Alert.alert(
             `${item.name}`,
             'Ao deletar esse projeto você confirma que foi finalizado e recebeste todo o pagamento dos tokens!',
             [
                 { 
                     text: "Sim", 
-                    onPress: () => handleDeleteConfirmProject(item.id) 
+                    onPress: () => handleDeleteConfirmProject(item.allocationId) 
                 },
                 {
                     text: "Não",
-                    onPress: () => alert('Cancelado'),
                     style: "cancel"
                 }
             ],
@@ -44,8 +56,16 @@ export function CardItemHome({data} : Props){
         );
     };
 
-    function handleDeleteConfirmProject(item : string){
-        alert(`deletando ${item}`)
+    async function handleDeleteConfirmProject(id : string){
+        try {
+            const allocationDocRef = doc(firestore, 'allocations', id);
+            await deleteDoc(allocationDocRef);
+
+            MessageDeleteAllocation();
+
+        } catch (error) {
+            console.error(error)
+        }
     };
 
     return (
@@ -64,7 +84,8 @@ export function CardItemHome({data} : Props){
                         fontSize: RFValue(12), 
                         fontWeight: 'bold', 
                         fontFamily: FONTS.TEXT,
-                        opacity: 0.5
+                        opacity: 0.5,
+                        width: RFValue(80)
                     }}
                 > sem imagem </Text>
             )}
