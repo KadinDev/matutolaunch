@@ -19,6 +19,7 @@ export const styles = StyleSheet.create({
     },
     ViewInfo: {
         height: '100%',
+        width: '100%',
         flexDirection: 'column',
         alignItems: 'flex-start',
         justifyContent: 'space-around',
@@ -36,7 +37,7 @@ export const styles = StyleSheet.create({
         lineHeight: RFValue(14),
         fontFamily: FONTS.TEXT,
         textAlign: 'left',
-        marginRight: RFValue(100)
+        marginRight: RFValue(100),
     },
     Date: {
         color: COLORS.BLACK,

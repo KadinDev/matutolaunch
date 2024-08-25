@@ -1,5 +1,5 @@
 export interface CriptoDTO {
-    id: string;
+    allocationId: string;
     image?: string;
     name: string;
     description: string;
@@ -11,4 +11,5 @@ export interface CriptoDTO {
     vesting: string;
     launch: string;
     date?: string;
+    uniqueKeyAllocation: string;
 };

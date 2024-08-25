@@ -29,5 +29,20 @@ export const styles = StyleSheet.create({
         bottom: getBottomSpace() + RFValue(20),
         right: '50%',
         backgroundColor: COLORS.BLACK,
-    }
+    },
+    headerScrollView: {
+        marginVertical: RFValue(10),
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+    },
+    buttonLogout: {
+        width: RFValue(40),
+        height: RFValue(40),
+        borderRadius: RFValue(30),
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: COLORS.WHITE_100,
+        elevation: 3
+    },
 })

@@ -26,12 +26,14 @@ export const styles = StyleSheet.create({
     buttonIcon: {
         position: 'absolute',
         right: RFValue(0),
-        top: '10%',
-        height: '80%',
+        height: '100%',
         alignItems: 'center',
         justifyContent: 'center',
         width: RFValue(40),
-        borderLeftWidth: 1
+        borderLeftWidth: 1,
+        backgroundColor: COLORS.WHITE_100,
+        borderTopRightRadius: RFValue(5),
+        borderBottomRightRadius: RFValue(5),
     },
     login: {
         marginTop: RFValue(20),

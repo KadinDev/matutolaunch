@@ -7,7 +7,8 @@ import {
     Keyboard,
     ScrollView,
     TouchableWithoutFeedback,
-    TextInput
+    TextInput,
+    ActivityIndicator
 } from 'react-native';
 
 import {styles} from './styles';
@@ -16,12 +17,24 @@ import {CriptoDTO} from '../../dtos/CriptoDTO';
 import { RFValue } from 'react-native-responsive-fontsize';
 
 import {useNavigation, useRoute} from '@react-navigation/native';
-import { COLORS, FONTS } from '@src/theme';
+import { COLORS } from '@src/theme';
+import {MessageNewAllocation, MessageEditAllocation} from '@utils/MessageToast';
+import {formatCurrencyMaskInput} from '@utils/Formatted';
 
 import {Icon} from '@components/Icon';
 import {Header} from '@components/Header';
 import {Input} from '@components/Input';
 
+import {
+    collection,
+    getFirestore,
+    addDoc,
+    Timestamp,
+    doc,
+    updateDoc
+} from 'firebase/firestore';
+
+import {useAuth} from '@hooks/auth';
 
 interface RouteParams {
     cripto?: CriptoDTO;
@@ -30,9 +43,11 @@ interface RouteParams {
 export function Register(){
     const navigation = useNavigation();
 
+    const {user} = useAuth();
     const route = useRoute();
     const {cripto} = route.params as RouteParams;
     
+    const [load, setLoad] = useState(false);
     const [image, setImage] = useState(cripto?.image || '');
     const [name, setName] = useState(cripto?.name || '');
     const [description, setDescription] = useState(cripto?.description || '');
@@ -44,8 +59,98 @@ export function Register(){
     const [vesting, setVesting] = useState(cripto?.vesting || '');
     const [launch, setLaunch] = useState(cripto?.launch || '');
 
-    function handleRegister(){
-        alert('Registrar');
+    const handleTextChange = (text : string) => {
+        const cleanedValue = text.replace(/[^\d]/g, '');
+        setInvestment(cleanedValue);
+    };
+
+    async function handleRegister(){
+        /* 
+        OBS: NAO PRECISO PASSAR UM ID POIS SERA CRIADO DE FORMA AUTOMATICA NO FIREBASE, PARA ACESSAR ESSE ID É SÓ
+        CHAMAR ELE (ID), QUE O FIREBASE IRÁ ENTENDER QUE QUERO O ID DO ITEM CRIADO, PARA NAO DAR ERRO NO TYPESCRIPT
+        EU COLOQUEI O ID: STRING, PARA PODER USAR.
+        */
+        if(!name || !description || !investment || !price || !tge || !cliff || !vesting || !launch){
+            alert('Preencha os campos!');
+            return;
+        };
+
+        const db = getFirestore();
+        
+        const nowDate = new Date();
+        const month = String(nowDate.getMonth() + 1).padStart(2, '0'); // coloca um 0 a esquerda
+        const year = nowDate.getFullYear();
+
+        if(!user?.id){
+            alert('sem id do user')
+            return;
+        };
+
+        setLoad(true);
+
+        // Atualizando Uma Alocação
+        if(cripto?.allocationId){
+            try {
+                const updatedAllocationData = {
+                    image,
+                    name,
+                    description,
+                    investment: formatCurrencyMaskInput(investment),
+                    price,
+                    taxa,
+                    tge: (parseFloat(tge)),
+                    cliff: (parseFloat(cliff)),
+                    vesting,
+                    launch,
+                    userId: user?.id,
+                    uniqueKeyAllocation: `${name}/${Date.now()}`,
+                };
+                const allocationRef = doc(db, 'allocations', cripto.allocationId);
+                await updateDoc(allocationRef, updatedAllocationData);
+                MessageEditAllocation();
+                navigation.navigate('home');
+                setLoad(false);
+                
+                return;
+
+            } catch (error) {
+                console.log(error);
+                setLoad(false);
+                return;
+            }
+        };
+
+        const allocationData = {
+            image,
+            name,
+            description,
+            investment: formatCurrencyMaskInput(investment),
+            price,
+            taxa,
+            tge: (parseFloat(tge)),
+            cliff: (parseFloat(cliff)),
+            vesting,
+            launch,
+            userId: user?.id,
+            date: `${month}/${year}`,
+            uniqueKeyAllocation: `${name}/${Date.now()}`,
+            createdAllocation: Timestamp.now(), // Timestamp do Firebase, ideia para usar o orderBy na tela Home
+        };
+
+        try {
+            // Add a new allocation document
+            const allocationsCollectionRef = collection(db, 'allocations');
+            await addDoc(allocationsCollectionRef, allocationData);
+
+            MessageNewAllocation();
+            navigation.goBack();
+            
+            setLoad(false);
+
+        } catch (error) {
+            console.log(error);
+            setLoad(false);
+        }
     };
 
     return (
@@ -74,14 +179,14 @@ export function Register(){
                                 color={COLORS.BLACK}
                             />
                         </TouchableOpacity>
-                        <Text style={styles.titleHeaderNavigation}> {cripto?.id ? 'editar' : 'nova'} alocação </Text>
+                        <Text style={styles.titleHeaderNavigation}> {cripto?.uniqueKeyAllocation ? 'editar' : 'nova'} alocação </Text>
                     </View>
 
                     <View style={styles.viewInputs2items}>
                         <Text style={styles.titleViewInputs}> Logo </Text>
                         <Input
                             type='large'
-                            placeholder='Cole a URL da imagem aqui'
+                            placeholder='URL da imagem aqui (não obrigatório)'
                             placeholderTextColor='#999999'
                             
                             value={image}
@@ -130,8 +235,8 @@ export function Register(){
                                     placeholderTextColor='#999999'
                                     keyboardType='numeric'
 
-                                    value={investment}
-                                    onChangeText={setInvestment}
+                                    value={formatCurrencyMaskInput(investment)}
+                                    onChangeText={handleTextChange}
                                 />
                             </View>
                         </View>
@@ -241,10 +346,18 @@ export function Register(){
                         activeOpacity={0.8}
                         onPress={handleRegister}
                     >
-                        <Icon
-                            icon='plus'
-                            color={COLORS.WHITE_800}
-                        />
+                        {load ? (
+                            <ActivityIndicator
+                                color={COLORS.WHITE_800}
+                                size={RFValue(20)}
+                            />
+                        ) : (
+
+                            <Icon
+                                icon='plus'
+                                color={COLORS.WHITE_800}
+                            />
+                        )}
                     </TouchableOpacity>
 
                 </ScrollView>

@@ -1,0 +1,82 @@
+Build Apk Android
+
+Instalar sempre de forma global antes do Build (para sempre ter o EAS atualizado)
+
+npm install -g eas-cli
+
+eas login
+devricardo
+159753
+
+eas init
+eas build:configure
+{
+  "cli": {
+    "version": ">= 0.47.0"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal"
+    },
+    "production": {
+      "android": {
+        "buildType": "apk"
+      }
+    }
+  }
+}
+
+eas build --platform android
+
+
+
+
+
+BUILD ANDROID E IOS
+
+eas login
+eas init
+
+{
+  "cli": {
+    "version": ">= 0.47.0"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal"
+    },
+    "production": {
+      "android": {
+        "buildType": "apk"
+      },
+      "ios": {
+        "buildType": "app-store"
+      }
+    }
+  }
+}
+
+
+
+eas build:configure
+
+eas build --platform all
+
+
+
+
+
+
+
+
+
+
+
